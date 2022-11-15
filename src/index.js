@@ -7,7 +7,7 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 const inputFormNode = document.querySelector('.search-form');
 const galleryNode = document.querySelector('.gallery');
 const loadBtnNode = document.querySelector('.load-more');
-let searchQuery, lightbox, currentPage;
+let searchQuery, lightbox, currentPage, totalPages;
 
 inputFormNode.addEventListener('submit', event => {
   event.preventDefault();
@@ -18,7 +18,7 @@ inputFormNode.addEventListener('submit', event => {
   fetchImages(searchQuery, currentPage)
     .then(data => {
       const imagesArray = data.hits;
-      const totalPages = Math.ceil(data.totalHits / 40);
+      totalPages = Math.ceil(data.totalHits / 40);
 
       if (!imagesArray.length) {
         Notify.failure(
@@ -59,6 +59,12 @@ loadBtnNode.addEventListener('click', event => {
         makeGallery(data.hits).join('')
       );
       lightbox.refresh();
+      if (currentPage >= totalPages) {
+        Notify.info(
+          '"We\'re sorry, but you\'ve reached the end of search results."'
+        );
+        loadBtnNode.classList.add('hidden');
+      }
     })
     .catch(error => console.log(error));
 });
