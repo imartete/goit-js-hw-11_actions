@@ -7,29 +7,30 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 const inputFormNode = document.querySelector('.search-form');
 const galleryNode = document.querySelector('.gallery');
 const loadBtnNode = document.querySelector('.load-more');
+let searchQuery, lightbox, currentPage;
 
 inputFormNode.addEventListener('submit', event => {
   event.preventDefault();
 
-  const searchQuery = event.target.elements.searchQuery.value.trim();
-  let currentPage = 1;
+  searchQuery = event.target.elements.searchQuery.value.trim();
+  currentPage = 1;
 
   fetchImages(searchQuery, currentPage)
     .then(data => {
-      // console.log(data);
       const imagesArray = data.hits;
       const totalPages = Math.ceil(data.totalHits / 40);
 
       if (!imagesArray.length) {
-        galleryNode.textContent = '';
         Notify.failure(
           '"Sorry, there are no images matching your search query. Please try again."'
         );
+        galleryNode.textContent = '';
+        loadBtnNode.classList.add('hidden');
       } else {
+        Notify.success(`"Hooray! We found ${data.totalHits} images."`);
         galleryNode.innerHTML = makeGallery(imagesArray).join('');
         loadBtnNode.classList.remove('hidden');
         inputFormNode.reset();
-        Notify.success(`"Hooray! We found ${data.totalHits} images."`);
       }
       if (imagesArray.length && currentPage >= totalPages) {
         Notify.info(
@@ -37,25 +38,27 @@ inputFormNode.addEventListener('submit', event => {
         );
         loadBtnNode.classList.add('hidden');
       }
+      lightbox = new SimpleLightbox('.gallery a');
+    })
+    .catch(error => console.log(error));
+});
 
-      loadBtnNode.addEventListener('click', event => {
-        event.preventDefault();
+loadBtnNode.addEventListener('click', event => {
+  event.preventDefault();
 
-        if (event.target.click) {
-          currentPage += 1;
-        }
+  if (event.target.click) {
+    currentPage += 1;
+  } else {
+    currentPage = 1;
+  }
 
-        fetchImages(searchQuery, currentPage).then(data => {
-          galleryNode.insertAdjacentHTML(
-            'beforeend',
-            makeGallery(data.hits).join('')
-          );
-          // if (inputFormNode.submit) {
-          //   currentPage = 1;
-          // }
-          console.log(currentPage);
-        });
-      });
+  fetchImages(searchQuery, currentPage)
+    .then(data => {
+      galleryNode.insertAdjacentHTML(
+        'beforeend',
+        makeGallery(data.hits).join('')
+      );
+      lightbox.refresh();
     })
     .catch(error => console.log(error));
 });
@@ -84,9 +87,3 @@ function makeGallery(array) {
   </a>`;
   });
 }
-
-new SimpleLightbox('.gallery a', {
-  captionsData: 'alt',
-  captionPosition: 'bottom',
-  captionDelay: 250,
-}).refresh();
