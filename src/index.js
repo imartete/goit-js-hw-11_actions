@@ -7,7 +7,7 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 const inputFormNode = document.querySelector('.search-form');
 const galleryNode = document.querySelector('.gallery');
 const loadBtnNode = document.querySelector('.load-more');
-let searchQuery, currentPage, totalPages, totalHits;
+let searchQuery, currentPage;
 
 inputFormNode.addEventListener('submit', event => {
   event.preventDefault();
@@ -19,7 +19,6 @@ inputFormNode.addEventListener('submit', event => {
 
 loadBtnNode.addEventListener('click', event => {
   event.preventDefault();
-  currentPage += 1;
   loadGallery();
 });
 
@@ -27,21 +26,24 @@ function loadGallery() {
   fetchImages(searchQuery, currentPage)
     .then(data => {
       const imagesArray = data.hits;
-      totalPages = Math.ceil(data.totalHits / 40);
-      totalHits = data.totalHits;
+      const totalPages = Math.ceil(data.totalHits / 40);
 
       if (!imagesArray.length) {
+        loadBtnNode.classList.add('hidden');
         Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
         );
       } else {
         galleryNode.insertAdjacentHTML(
           'beforeend',
-          makeGallery(data.hits).join('')
+          makeGallery(imagesArray).join('')
         );
         loadBtnNode.classList.remove('hidden');
         inputFormNode.reset();
         new SimpleLightbox('.gallery a').refresh();
+        if (currentPage == 1) {
+          Notify.success(`Hooray! We found ${data.totalHits} images.`);
+        }
         if (currentPage === totalPages) {
           Notify.info(
             "We're sorry, but you've reached the end of search results."
@@ -51,7 +53,9 @@ function loadGallery() {
       }
     })
     .catch(error => console.log(error))
-    .finally(loadBtnNode.classList.add('hidden'));
+    .finally(() => {
+      currentPage += 1;
+    });
 }
 
 function makeGallery(array) {
