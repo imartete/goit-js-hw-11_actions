@@ -11,6 +11,7 @@ body {
   background-color: rgb(174, 174, 174);
   color: #393939;
   line-height: 1.5;
+  padding-bottom: 20px;
 }
 
 .search-form {
@@ -47,7 +48,7 @@ button {
 }
 
 .load-more {
-  margin: 20px auto 20px auto;
+  margin: 20px auto 0 auto;
 }
 
 .load-more.hidden {

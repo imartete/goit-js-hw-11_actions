@@ -7,14 +7,21 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 const inputFormNode = document.querySelector('.search-form');
 const galleryNode = document.querySelector('.gallery');
 const loadBtnNode = document.querySelector('.load-more');
-let searchQuery, currentPage;
+let searchQuery, currentPage, totalPages;
+
+let scrolledToBottom = false;
 
 inputFormNode.addEventListener('submit', event => {
   event.preventDefault();
-  searchQuery = event.target.elements.searchQuery.value.trim();
-  currentPage = 1;
-  galleryNode.textContent = '';
-  loadGallery();
+  enteredText = event.target.elements.searchQuery.value.trim();
+
+  if (enteredText !== searchQuery) {
+    searchQuery = enteredText;
+    currentPage = 1;
+    galleryNode.textContent = '';
+    loadGallery();
+    scrolledToBottom = false;
+  }
 });
 
 loadBtnNode.addEventListener('click', event => {
@@ -22,13 +29,29 @@ loadBtnNode.addEventListener('click', event => {
   loadGallery();
 });
 
+window.addEventListener('scroll', () => {
+  if (!scrolledToBottom) onEndOfSearch();
+});
+
+function onEndOfSearch() {
+  if (
+    currentPage > totalPages &&
+    window.innerHeight + Math.ceil(window.pageYOffset) >=
+      document.body.offsetHeight
+  ) {
+    scrolledToBottom = true;
+    Notify.info("We're sorry, but you've reached the end of search results.");
+    loadBtnNode.classList.add('hidden');
+  }
+}
+
 function loadGallery() {
   fetchImages(searchQuery, currentPage)
     .then(data => {
       const imagesArray = data.hits;
-      const totalPages = Math.ceil(data.totalHits / 40);
+      totalPages = Math.ceil(data.totalHits / 40);
 
-      if (!imagesArray.length) {
+      if (imagesArray.length == 0) {
         loadBtnNode.classList.add('hidden');
         Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
@@ -41,14 +64,9 @@ function loadGallery() {
         loadBtnNode.classList.remove('hidden');
         inputFormNode.reset();
         new SimpleLightbox('.gallery a').refresh();
+
         if (currentPage == 1) {
           Notify.success(`Hooray! We found ${data.totalHits} images.`);
-        }
-        if (currentPage === totalPages) {
-          Notify.info(
-            "We're sorry, but you've reached the end of search results."
-          );
-          loadBtnNode.classList.add('hidden');
         }
       }
     })
