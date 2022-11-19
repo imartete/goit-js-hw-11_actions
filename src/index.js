@@ -7,7 +7,7 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 const inputFormNode = document.querySelector('.search-form');
 const galleryNode = document.querySelector('.gallery');
 const loadBtnNode = document.querySelector('.load-more');
-let searchQuery, currentPage, totalPages;
+let enteredText, searchQuery, currentPage, totalPages;
 
 let scrolledToBottom = false;
 
@@ -16,6 +16,7 @@ inputFormNode.addEventListener('submit', event => {
   enteredText = event.target.elements.searchQuery.value.trim();
 
   if (enteredText !== searchQuery) {
+    loadBtnNode.classList.add('hidden');
     searchQuery = enteredText;
     currentPage = 1;
     galleryNode.textContent = '';
@@ -52,7 +53,6 @@ function loadGallery() {
       totalPages = Math.ceil(data.totalHits / 40);
 
       if (imagesArray.length == 0) {
-        loadBtnNode.classList.add('hidden');
         Notify.failure(
           'Sorry, there are no images matching your search query. Please try again.'
         );
@@ -64,6 +64,10 @@ function loadGallery() {
         loadBtnNode.classList.remove('hidden');
         inputFormNode.reset();
         new SimpleLightbox('.gallery a').refresh();
+
+        if (totalPages <= 1) {
+          loadBtnNode.classList.add('hidden');
+        }
 
         if (currentPage == 1) {
           Notify.success(`Hooray! We found ${data.totalHits} images.`);
